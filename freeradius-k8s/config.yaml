@@ -19,5 +19,5 @@ options:
   image:
     description: Docker image name
     type: string
-    default: tpdock/freeradius
+    default: 2stacks/freeradius
 

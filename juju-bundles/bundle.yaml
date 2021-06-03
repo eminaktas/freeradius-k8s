@@ -1,12 +1,19 @@
 description: FreeRADIUS Bundle
 bundle: kubernetes
 applications:
-  freeradius:
+  freeradius-k8s:
     charm: './charms/freeradius-k8s'
     scale: 1
   mariadb-k8s:
-    charm: 'cs:~karimsye/mariadb-k8s-charmed-osm-2'
+    charm: 'cs:~charmed-osm/mariadb-k8s'
+    channel: 'stable'
     scale: 1
+    options:
+      user: radius
+      password: radpass
+      root_password: radius
+      database: radius
+      # mysql_port: 3306 # Default value is already 3306
 relations:
   - - 'freeradius-k8s:mysql'
     - 'mariadb-k8s:mysql'

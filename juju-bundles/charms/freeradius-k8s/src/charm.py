@@ -14,6 +14,7 @@ develop a new k8s charm using the Operator Framework:
 
 import logging
 
+from mysql import MysqlClient
 from ops.charm import CharmBase
 from ops.framework import StoredState
 from ops.main import main
@@ -29,6 +30,12 @@ class FreeradiusK8SCharm(CharmBase):
     """Charm the service."""
 
     state = StoredState()
+    db_host = "mariadb-k8s"
+    db_port = "3306"
+    db_user = "radius"
+    db_password = "radpass"
+    db_root_password = "radius"
+    db_name = "radius"
 
     def __init__(self, *args):
         super().__init__(*args)
@@ -43,13 +50,11 @@ class FreeradiusK8SCharm(CharmBase):
         self.framework.observe(self.on.custom_action, self._on_custom_action)
 
         # Relation hooks
-        self.framework.observe(self.on.mysql_relation_changed, self._on_mysql_relation_changed)
+        self.mysql_client = MysqlClient(self, "mysql")
+        self.framework.observe(self.on.mysql_relation_changed, self._apply_spec)
+        self.framework.observe(self.on.mysql_relation_broken, self._apply_spec)
 
-    def _on_mysql_relation_changed(self, event):
-        # TODO
-        return
-
-    def _apply_spec(self):
+    def _apply_spec(self, _=None):
         # Only apply the spec if this unit is a leader.
         if not self.framework.model.unit.is_leader():
             return
@@ -76,12 +81,20 @@ class FreeradiusK8SCharm(CharmBase):
         ]
 
         spec = {
-            "version": 2,
+            "version": 3,
             "containers": [
                 {
                     "name": self.framework.model.app.name,
                     "image": "{}".format(config["image"]),
                     "ports": ports,
+                    "envConfig": {  # Environment variables that wil be passed to the container
+                        "DB_HOST": self.mysql_client.host or self.db_host,
+                        "DB_PORT": self.mysql_client.port or self.db_port,
+                        "DB_NAME": self.mysql_client.database or self.db_name,
+                        "DB_USERNAME": self.mysql_client.user or self.db_user,
+                        "DB_PASS": self.mysql_client.password or self.db_password,
+                    }
+
                 }
             ],
         }

@@ -9,15 +9,15 @@
 
 options:
   port-1:
-    description: Zookeeper client port
+    description: Radius port 1
     type: int
     default: 1812
   port-2:
-    description: Zookeeper client port
+    description: Radius port 2
     type: int
     default: 1813
   image:
     description: Docker image name
     type: string
-    default: 2stacks/freeradiu
+    default: 2stacks/freeradius
 
