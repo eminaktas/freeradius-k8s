@@ -42,9 +42,8 @@ class FreeradiusK8SCharm(CharmBase):
         self.state.set_default(spec=None)
 
         # Basic hooks
-        self.framework.observe(self.on.start, self._on_start)
-        self.framework.observe(self.on.upgrade_charm, self._on_upgrade_charm)
         self.framework.observe(self.on.config_changed, self._on_config_changed)
+        self.framework.observe(self.on.leader_elected, self._apply_spec)
 
         # Action hooks
         self.framework.observe(self.on.custom_action, self._on_custom_action)
@@ -107,19 +106,6 @@ class FreeradiusK8SCharm(CharmBase):
         unit.status = MaintenanceStatus("Applying new pod spec")
         self._apply_spec()
         unit.status = ActiveStatus("Ready")
-
-    def _on_start(self, event):
-        """Called when the charm is being installed"""
-        unit = self.model.unit
-        unit.status = MaintenanceStatus("Applying pod spec")
-        self._apply_spec()
-        unit.status = ActiveStatus("Ready")
-
-    def _on_upgrade_charm(self, event):
-        """Upgrade the charm."""
-        unit = self.model.unit
-        unit.status = MaintenanceStatus("Upgrading charm")
-        self.on_start(event)
 
     def _on_custom_action(self, event):
         """Define an action"""
