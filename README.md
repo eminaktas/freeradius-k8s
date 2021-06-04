@@ -28,3 +28,8 @@ kubectl cp mysql/radius.sql.gz mariadb-k8s-0:/tmp/backup.sql.gz -n testing-freer
 # Run restore action
 juju run-action mariadb-k8s/0 restore path="/tmp" -m testing-freeradius
 ```
+
+## Auth test action 
+```bash
+juju run-action freeradiustesting-k8s/<unit-number> auth-test hostname=freeradius-k8s username=testing password=password nas-port-number=2 radius-secret=testing123 --wait -m testing-freeradius
+```

@@ -11,12 +11,14 @@ applications:
       root_password: radius
       database: radius
       # mysql_port: 3306 # Default value is already 3306
-  freeradius-k8s:
-    charm: './charms/freeradius-k8s'
-    scale: 1
   freeradiustesting-k8s:
     charm: './charms/freeradiustesting-k8s'
+    scale: 1
+  freeradius-k8s:
+    charm: './charms/freeradius-k8s'
     scale: 1
 relations:
   - - 'mariadb-k8s:mysql'
     - 'freeradius-k8s:mysql'
+  - - 'freeradius-k8s:freeradiustesting'
+    - 'freeradiustesting-k8s:freeradiustesting'
