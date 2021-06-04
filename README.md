@@ -19,3 +19,12 @@ juju status
 # Switch model
 juju switch testing-radius
 ```
+
+It requires MySQL database restored. Manually, you can use these steps
+
+```bash
+# Copy backup file to container
+kubectl cp mysql/radius.sql.gz mariadb-k8s-0:/tmp/backup.sql.gz -n testing-freeradius -c mariadb-k8s
+# Run restore action
+juju run-action mariadb-k8s/0 restore path="/tmp" -m testing-freeradius
+```

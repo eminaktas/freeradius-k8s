@@ -20,4 +20,7 @@ options:
     description: Docker image name
     type: string
     default: 2stacks/freeradius
-
+  debug:
+    description: Whether open the debug mode
+    type: string
+    default: "yes"

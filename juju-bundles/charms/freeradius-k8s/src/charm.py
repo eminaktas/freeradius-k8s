@@ -36,6 +36,7 @@ class FreeradiusK8SCharm(CharmBase):
     db_password = "radpass"
     db_root_password = "radius"
     db_name = "radius"
+    rad_debug = "no"
 
     def __init__(self, *args):
         super().__init__(*args)
@@ -92,6 +93,7 @@ class FreeradiusK8SCharm(CharmBase):
                         "DB_NAME": self.mysql_client.database or self.db_name,
                         "DB_USERNAME": self.mysql_client.user or self.db_user,
                         "DB_PASS": self.mysql_client.password or self.db_password,
+                        "RAD_DEBUG": config.get("debug") or self.rad_debug,
                     }
 
                 }
