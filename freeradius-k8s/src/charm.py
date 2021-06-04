@@ -15,6 +15,7 @@ develop a new k8s charm using the Operator Framework:
 import logging
 
 from mysql import MysqlClient
+from freeradiustesting import FreeRadiusTesting
 from ops.charm import CharmBase
 from ops.framework import StoredState
 from ops.main import main
@@ -37,6 +38,7 @@ class FreeradiusK8SCharm(CharmBase):
     db_root_password = "radius"
     db_name = "radius"
     rad_debug = "no"
+    freeradius_host = "10.233.95.0/24"
 
     def __init__(self, *args):
         super().__init__(*args)
@@ -51,6 +53,10 @@ class FreeradiusK8SCharm(CharmBase):
 
         # Relation hooks
         self.mysql_client = MysqlClient(self, "mysql")
+        self.framework.observe(self.on.mysql_relation_changed, self._apply_spec)
+        self.framework.observe(self.on.mysql_relation_broken, self._apply_spec)
+
+        self.freeradiustesting_client = FreeRadiusTesting(self, "freeradiustesting")
         self.framework.observe(self.on.mysql_relation_changed, self._apply_spec)
         self.framework.observe(self.on.mysql_relation_broken, self._apply_spec)
 
@@ -93,6 +99,7 @@ class FreeradiusK8SCharm(CharmBase):
                         "DB_NAME": self.mysql_client.database or self.db_name,
                         "DB_USERNAME": self.mysql_client.user or self.db_user,
                         "DB_PASS": self.mysql_client.password or self.db_password,
+                        "RAD_CLIENTS": self.freeradius_host,  # self.freeradiustesting_client.client or
                         "RAD_DEBUG": config.get("debug") or self.rad_debug,
                     }
 

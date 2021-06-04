@@ -70,7 +70,7 @@ class FreeradiusK8SCharm(CharmBase):
                     "name": self.framework.model.app.name,
                     "image": "{}".format(config["image"]),
                     "ports": ports,
-                    "command": ["sh", "-c", "sleep 999999"],
+                    "command": ["sh", "-c", "while true; do sleep 30; done;"],
                     "envConfig": {  # Environment variables that wil be passed to the container
                     }
                 }
@@ -94,16 +94,20 @@ class FreeradiusK8SCharm(CharmBase):
         nas_port_number = event.params["nas-port-number"]
         radius_secret = event.params["radius-secret"]
         try:
-            subprocess.run("radtest {u} {p} {h} {n} {r}".format(
-                u=username,
-                p=password,
-                h=hostname,
-                n=nas_port_number,
-                r=radius_secret
-            ), shell=True).check_returncode()
-            event.set_results({
-                "Authentication Action Completed"
-            })
+            out = subprocess.check_output(
+                "radtest {u} {p} {h} {n} {r}".format(
+                    u=username,
+                    p=password,
+                    h=hostname,
+                    n=nas_port_number,
+                    r=radius_secret
+                )
+            ).strip().decode("utf-8")
+            event.set_results(
+                {
+                    "Authentication Action Completed: {}".format(out)
+                }
+            )
         except Exception as e:
             event.fail("Authentication Action Failed: {}".format(e))
 
