@@ -1,0 +1,33 @@
+# Copyright 2021 root
+# See LICENSE file for licensing details.
+#
+# TEMPLATE-TODO: change this example to suit your needs.
+# If you don't need actions, you can remove the file entirely.
+# It ties in to the example _on_fortune_action handler in src/charm.py
+#
+# Learn more about actions at: https://juju.is/docs/sdk/actions
+
+auth-test:
+    description: "Testing Authentication"
+    params:
+        username:
+            description: "username"
+            default: "testing"
+        password:
+            description: "password"
+            defualt: "password"
+        hostname:
+            description: "hostname"
+            default: "freeradius-k8s"
+        nas-port-number:
+            description: "nas-port-number"
+            default: 2
+        radius-secret:
+            description: "redius-secret"
+            default: "testing123"
+    required:
+        - username
+        - password
+        - hostname
+        - nas-port-number
+        - radius-secret
