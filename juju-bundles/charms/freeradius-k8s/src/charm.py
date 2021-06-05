@@ -31,18 +31,20 @@ class FreeradiusK8SCharm(CharmBase):
     """Charm the service."""
 
     state = StoredState()
-    db_host = "mariadb-k8s"
-    db_port = "3306"
-    db_user = "radius"
-    db_password = "radpass"
-    db_root_password = "radius"
-    db_name = "radius"
-    rad_debug = "no"
-    freeradius_client = "10.0.0.0/24"
 
     def __init__(self, *args):
         super().__init__(*args)
-        self.state.set_default(spec=None)
+        self.state.set_default(
+            spec=None,
+            db_host="mariadb-k8s",
+            db_port="3306",
+            db_user="radius",
+            db_password="radpass",
+            db_root_password="radius",
+            db_name="radius",
+            rad_debug="no",
+            freeradius_client="10.0.0.0/24",
+        )
 
         # Basic hooks
         self.framework.observe(self.on.config_changed, self._on_config_changed)
@@ -64,6 +66,23 @@ class FreeradiusK8SCharm(CharmBase):
         # Only apply the spec if this unit is a leader.
         if not self.framework.model.unit.is_leader():
             return
+
+        config = self.framework.model.config
+
+        if self.mysql_client.host:
+            self.state.db_host = self.mysql_client.host
+        if self.mysql_client.port:
+            self.state.db_port = self.mysql_client.port
+        if self.mysql_client.database:
+            self.state.db_name = self.mysql_client.database
+        if self.mysql_client.user:
+            self.state.db_user = self.mysql_client.user
+        if self.mysql_client.password:
+            self.state.db_password = self.mysql_client.password
+        if self.freeradiustesting_client.client:
+            self.state.freeradius_client = self.freeradiustesting_client.client
+        if config.get("debug"):
+            self.state.rad_debug = config.get("debug")
         new_spec = self.make_pod_spec()
         if new_spec == self.state.spec:
             return
@@ -94,15 +113,13 @@ class FreeradiusK8SCharm(CharmBase):
                     "image": "{}".format(config["image"]),
                     "ports": ports,
                     "envConfig": {  # Environment variables that wil be passed to the container
-                        "DB_HOST": self.mysql_client.host or self.db_host,
-                        "DB_PORT": self.mysql_client.port or self.db_port,
-                        "DB_NAME": self.mysql_client.database or self.db_name,
-                        "DB_USERNAME": self.mysql_client.user or self.db_user,
-                        "DB_PASS": self.mysql_client.password or self.db_password,
-                        "RAD_CLIENTS": (
-                            self.freeradiustesting_client.client or self.freeradius_client
-                        ),
-                        "RAD_DEBUG": config.get("debug") or self.rad_debug,
+                        "DB_HOST": self.state.db_host,
+                        "DB_PORT": self.state.db_port,
+                        "DB_NAME": self.state.db_name,
+                        "DB_USERNAME": self.state.db_user,
+                        "DB_PASS": self.state.db_password,
+                        "RAD_CLIENTS": self.state.freeradius_client,
+                        "RAD_DEBUG": self.state.rad_debug,
                     }
 
                 }

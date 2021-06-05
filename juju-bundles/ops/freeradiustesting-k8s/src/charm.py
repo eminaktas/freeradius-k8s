@@ -15,7 +15,7 @@ develop a new k8s charm using the Operator Framework:
 import logging
 import subprocess
 
-from utils import get_network_from_iface, get_local_ip
+from utils import get_service_ip  # , get_cidr_from_iface
 from ops.charm import CharmBase
 from ops.framework import StoredState
 from ops.main import main
@@ -54,13 +54,13 @@ class FreeradiusK8SCharm(CharmBase):
         )
 
     def _on_freeradiustesting_relation_changed(self, event):
-        # TODO: The functions are running in the k8s-operator
         if not self.framework.model.unit.is_leader():
             return
-        local_ip = get_local_ip()
-        client = get_network_from_iface(local_ip)
-        event.relation.data[self.model.unit]["host"] = local_ip
-        event.relation.data[self.model.unit]["client"] = client
+        # TODO: Use Container IP. For now, accept all connections
+        service_ip = get_service_ip(self.framework.model.app.name)
+        # client = get_cidr_from_iface(service_ip)
+        event.relation.data[self.model.unit]["host"] = service_ip
+        event.relation.data[self.model.unit]["client"] = "0.0.0.0/0"  # client
 
     def _apply_spec(self, _=None):
         # Only apply the spec if this unit is a leader.
@@ -88,7 +88,7 @@ class FreeradiusK8SCharm(CharmBase):
             "containers": [
                 {
                     "name": self.framework.model.app.name,
-                    "image": "{}".format(config["image"]),
+                    "image": f"{config['image']}",
                     "ports": ports,
                     "command": ["sh", "-c", "while true; do sleep 30; done;"],
                     "envConfig": {  # Environment variables that wil be passed to the container
@@ -115,21 +115,14 @@ class FreeradiusK8SCharm(CharmBase):
         radius_secret = event.params["radius-secret"]
         try:
             out = subprocess.check_output(
-                "radtest {u} {p} {h} {n} {r}".format(
-                    u=username,
-                    p=password,
-                    h=hostname,
-                    n=nas_port_number,
-                    r=radius_secret
-                ), shell=True, stderr=subprocess.STDOUT,
-            ).strip().decode("utf-8")
-            event.set_results(
-                {
-                    "Authentication Action Completed: {}".format(out)
-                }
+                f"radtest {username} {password} {hostname} {nas_port_number} {radius_secret}",
+                shell=True
             )
+            # Pretty output
+            out = out.decode("utf-8").strip().replace("\n\t", " ").replace("\n", " ")
+            event.set_results({"result": f"Authentication Action Completed: {out}"})
         except Exception as e:
-            event.fail("Authentication Action Failed: {}".format(e))
+            event.fail(f"Authentication Action Failed: {e}")
 
 
 if __name__ == "__main__":

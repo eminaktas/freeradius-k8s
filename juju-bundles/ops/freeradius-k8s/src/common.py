@@ -9,11 +9,9 @@ class BaseRelationClient(ops.framework.Object):
         self,
         charm: ops.charm.CharmBase,
         relation_name: str,
-        mandatory_fields: list,
     ):
         super().__init__(charm, relation_name)
         self.relation_name = relation_name
-        self.mandatory_fields = mandatory_fields
         self._update_relation()
 
     def get_data_from_unit(self, key: str):
@@ -40,16 +38,6 @@ class BaseRelationClient(ops.framework.Object):
             data = self.relation.data[self.relation.app].get(key)
             if data:
                 return data
-
-    def is_missing_data_in_unit(self):
-        return not all(
-            [self.get_data_from_unit(field) for field in self.mandatory_fields]
-        )
-
-    def is_missing_data_in_app(self):
-        return not all(
-            [self.get_data_from_app(field) for field in self.mandatory_fields]
-        )
 
     def _update_relation(self):
         self.relation = self.framework.model.get_relation(self.relation_name)
